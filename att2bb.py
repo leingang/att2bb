@@ -24,9 +24,15 @@ records = csv.reader(open(args.file, 'r'))
 # TODO: allow for multiple dates
 rec=next(records)
 logging.debug("first record: %s",repr(rec))
-course=rec[0]
-date=rec[2]
-logging.debug("course=%s date=%s" % (course,date))
+course=rec.pop(0)
+logging.debug("course=%s",course)
+dates=[]
+rec.pop(0) # next field is blank
+for date in rec:
+	if(date != ''):
+		dates.append('Attendance %s' % date)
+
+logging.debug("dates=%s",dates)
 
 # second row is blank
 next(records)
@@ -35,18 +41,25 @@ next(records)
 report=[]
 for row in records:
 	logging.debug("Processing row: %s",repr(row))
-	(name,netid,status,note)=row
-	logging.debug("NetID=%s; status=%s; note=%s",netid,status,note)
+	name=row.pop(0)
+	netid=row.pop(0)
+	logging.debug("NetID=%s")
 	reportrow=[netid]
-	score = 1 if (status=='Present') else 0
-	score+= len(note)
-	logging.debug("score=%s",score)
-	reportrow.append("%f" % score)
+	for date in dates:
+		status=row.pop(0)
+		note=row.pop(0)
+		score = 1 if (status=='Present') else 0
+		score+= len(note)
+		logging.debug("score(%s)=%s",date,score)
+		reportrow.append("%.2f" % score)
 	report.append(reportrow)
-	
+
 # output
 writer=csv.writer(sys.stdout)
-writer.writerow(['Username','Attendance %s' % date])
+headers=['Username']
+headers.extend(dates)
+logging.debug('headers=%s',repr(headers))
+writer.writerow(headers)
 for row in report:
 	writer.writerow(row)
 	
